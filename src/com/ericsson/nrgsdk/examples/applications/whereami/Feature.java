@@ -163,9 +163,29 @@ public class Feature{
 			System.out.println("Dodano drivera o numerze: " + driver.number);
 			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
 		}
+		
+		// Client registration
+		if (aMessageContent.toLowerCase().matches("register-client:(.*)")) {
+			if(service.getClient(aSender).isPresent()) {
+				Client client = service.getClient(aSender).get();
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
+				System.out.println("Client already registered: " + client.number);
+				return;
+			}
+			Client client = new Client(aSender, getName(aMessageContent), itsLocationProcessor);
+			service.clients.add(client);
+			System.out.println("Dodano clienta o numerze: " + client.number);
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
+		}
 
-		//worker chce zaczac monitorowac czas pracy
-		//jezeli wszystko git, zaczynamy liczenie czasu od momentu request'a
+		
+		
+		
+		// TODO
+		
+		
+		// worker chce zaczac monitorowac czas pracy
+		// jezeli wszystko git, zaczynamy liczenie czasu od momentu request'a
 		if (aMessageContent.toLowerCase().equals("start") && worker != null ) { //sprawdzamy pracownika
 			locationCheck="";
 			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!

@@ -1,9 +1,16 @@
 package com.ericsson.nrgsdk.examples.applications.whereami.models;
 
+import com.ericsson.nrgsdk.examples.applications.whereami.LocationProcessor;
+
 public class Client {
 	public String number;
 	public String destination;
+	private LocationProcessor locationProcessor;
 	
+	public Client(String number, String name, LocationProcessor locationProcessor){
+		this.number = number;
+		this.locationProcessor = locationProcessor;
+	}
 	
 	@Override
 	public int hashCode() {
