@@ -1,10 +1,10 @@
 # INSTRUKCJA:
 ### Instalacja SDK Ericssona(Windows 10)
-1. Instalujemy SDK Ericssona + Java 1.3 (plik: WAIP_CD\Parlay\sdk\files\ericsson_nrgsdk_R5A02_setup.exe)
+1. Instalujemy SDK Ericssona + Java 1.8 (plik: WAIP_CD\Parlay\sdk\files\ericsson_nrgsdk_R5A02_setup.exe)
 2. Ogarniamy środowisko do Javy : Eclipse/IntelliJ, z konsoli nie damy rady. Preferowane: IntelliJ IDEA Community
 3. Ustawiamy zmienne środowiskowe:
 ```
-JAVA_HOME = C:\Program Files\Java\jdk1.3.1_15 (tam gdzie zainstalowaliście Jave 1.3)
+JAVA_HOME = C:\Program Files\Java\jdk1.8.1_15 
 NRGSDK = C:\Program Files (x86)\Ericsson\Network Resource Gateway SDK\R5A02
 ANT_HOME = %NRGSDK%\tools\ant
 PATH += %NRGSDK%\simulator\lib\net\erlang\bin
