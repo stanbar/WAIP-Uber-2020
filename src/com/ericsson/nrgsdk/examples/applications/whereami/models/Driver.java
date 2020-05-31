@@ -1,11 +1,18 @@
 package com.ericsson.nrgsdk.examples.applications.whereami.models;
 
+import com.ericsson.nrgsdk.examples.applications.whereami.LocationProcessor;
+
 public class Driver {
 	public String number;
 	public int ridesCnt;
 	public float avrgScore;
 	public boolean isWorking;
+	private LocationProcessor locationProcessor;
 	
+	public Driver(String number, String name, LocationProcessor locationProcessor){
+		this.number = number;
+		this.locationProcessor = locationProcessor;
+	}
 	
 	@Override
 	public int hashCode() {

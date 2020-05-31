@@ -150,19 +150,18 @@ public class Feature{
 							   String aMessageContent) {
 		System.out.println("Odebrano SMS-a o tresci: " + aMessageContent);
 
-		//Rejestracja uzytkownika
+		// Driver registration
 		if (aMessageContent.toLowerCase().matches("register-driver:(.*)")) {
-			if(service.drivers.contains(aSender)) {
+			if(service.getDriver(aSender).isPresent()) {
+				Driver driver = service.getDriver(aSender).get();
 				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
-				System.out.println("Driver already registered: " + worker.getNumer());
+				System.out.println("Driver already registered: " + driver.number);
 				return;
 			}
-			worker = new Worker(aSender, getName(aMessageContent), 8, itsLocationProcessor);
-			service.addWorker(worker);
-			System.out.println("Dodano pracownika o numerze: " + worker.getNumer());
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym uzytkownikiem serwisu");
-		} else if(aMessageContent.toLowerCase().equals("rejestracja") && worker != null) {
-			
+			Driver driver = new Driver(aSender, getName(aMessageContent), itsLocationProcessor);
+			service.drivers.add(driver);
+			System.out.println("Dodano drivera o numerze: " + driver.number);
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
 		}
 
 		//worker chce zaczac monitorowac czas pracy
