@@ -310,7 +310,7 @@ public class Feature{
 	}
 
 	private String getName(String aMessageContent){
-		return aMessageContent.substring(5);
+		return aMessageContent.substring(aMessageContent.indexOf(":"));
 	}
 	private String getDay(String aMessageContent){
 		return aMessageContent.substring(13,15);
@@ -394,7 +394,8 @@ public class Feature{
 		s += "\n";
 		s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
 		s += "\n-------------------------------------------\n";
-		s += "\"imie:TWOJE_IMIE\" pozwala uzytkownikowi na rejestracje w systemie \n";
+		s += "\"registrer-driver:name\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
+		s += "\"registrer-client:name\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
 		s += "\"start\" pozwala uzytkownikowi na rozpoczecie rejestrowania czasu pracy \n";
 		s += "\"stop\" pozwala uzytkownikowi na zakonczenie rejestrowania czasu pracy \n";
 		s += "\"pauza\" pozwala uzytkownikowi rozpoczecie 15 minutowej przerwy \n";
