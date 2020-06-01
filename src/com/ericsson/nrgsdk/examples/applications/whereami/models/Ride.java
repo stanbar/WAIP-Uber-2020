@@ -9,7 +9,8 @@ public class Ride {
 	public float price;
 	public float distance;
 	public boolean active = false;
-	
+	public boolean finished = false;
+
 	public Ride(Client client) {
 		this.client = client;
 		this.number = Ride.RIDES_COUNTER;

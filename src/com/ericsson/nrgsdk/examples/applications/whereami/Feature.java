@@ -229,16 +229,11 @@ public class Feature {
             ride.driver = driver;
             ride.active = true;
 
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Go and pick up the client !");
             itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.client.number, "Zgloszenie zostalo przyjęte", location);
-                }
-            });
-            itsLocationProcessor.requestLocation(ride.client.number, new BiConsumer<String, Location>() {
-                @Override
-                public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.driver.number, "Zgloszenie zostalo przyjęte", location);
+                    sendLocalizationMMS(ride.client.number, "Your uber is on the way, cruisin down the street in his 64", location);
                 }
             });
         }
@@ -254,9 +249,9 @@ public class Feature {
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgloszenie zostalo anulowane");
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgloszenie zostalo anulowane");
                 ride.active = false;
+                ride.finished = true;
                 return;
             }
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda zostala juz anulowana‍");
         }
     }
 
