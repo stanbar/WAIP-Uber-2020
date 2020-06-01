@@ -15,44 +15,39 @@ public class Service {
 	final public List<Ride> rides = new ArrayList<Ride>();
 
 	public Optional<Driver> getDriver(final String number) {
-		Driver driver = drivers.stream().filter(new Predicate<Driver>() {
+		return drivers.stream().filter(new Predicate<Driver>() {
 			@Override
 			public boolean test(Driver driver) {
 				return number == driver.number;
 			}
-		}).findAny().orElse(null);
-
-		return Optional.of(driver);
+		}).findAny();
 	}
 
 	public Optional<Client> getClient(final String number) {
-		Client client = clients.stream().filter(new Predicate<Client>() {
+		return clients.stream().filter(new Predicate<Client>() {
 			@Override
 			public boolean test(Client client) {
 				return number == client.number;
 			}
-		}).findAny().orElse(null);
-		return Optional.of(client);
+		}).findAny();
 	}
 
 	public Optional<Ride> getRide(final int number) {
-		Ride ride = rides.stream().filter(new Predicate<Ride>() {
+		return rides.stream().filter(new Predicate<Ride>() {
 			@Override
 			public boolean test(Ride ride) {
 				return number == ride.number;
 			}
-		}).findAny().orElse(null);
-		return Optional.of(ride);
+		}).findAny();
 	}
 
 	public Optional<Ride> getActiveRideForClientOrDriver(final String number) {
-		Ride ride = rides.stream().filter(new Predicate<Ride>() {
+		return rides.stream().filter(new Predicate<Ride>() {
 			@Override
 			public boolean test(Ride ride) {
 				return number == ride.client.number || number == ride.driver.number;
 			}
-		}).findAny().orElse(null);
-		return Optional.of(ride);
+		}).findAny();
 	}
 
 	public boolean addRide(Ride ride) {

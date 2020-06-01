@@ -145,10 +145,10 @@ public class Feature {
      */
     protected void smsReceived(String aSender, String aReceiver,
                                String aMessageContent) {
-        System.out.println("Odebrano SMS-a o tresci: " + aMessageContent);
+        System.out.println("Odebrano SMS-a o tresci: " + aMessageContent + " aSender: " + aSender);
 
         // Driver registration
-        if (aMessageContent.toLowerCase().matches("register-driver:(.*)")) {
+        if (aMessageContent.toLowerCase().matches("register-driver")) {
             if (service.getDriver(aSender).isPresent()) {
                 Driver driver = service.getDriver(aSender).get();
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
@@ -162,7 +162,7 @@ public class Feature {
         }
 
         // Client registration
-        if (aMessageContent.toLowerCase().matches("register-client:(.*)")) {
+        if (aMessageContent.toLowerCase().matches("register-client")) {
             if (service.getClient(aSender).isPresent()) {
                 Client client = service.getClient(aSender).get();
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
