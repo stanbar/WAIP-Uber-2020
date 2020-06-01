@@ -156,7 +156,7 @@ public class Feature {
                 return;
             } else if (service.getClient(aSender).isPresent()) {
                 Client client = service.getClient(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako client, możesz być albo driverem albo clientem");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako client, mozesz byc albo driverem albo clientem");
                 System.out.println("Client already registered: " + client.number);
                 return;
             }
@@ -175,7 +175,7 @@ public class Feature {
                 return;
             } else if (service.getDriver(aSender).isPresent()) {
                 Driver driver = service.getDriver(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako driver, możesz być albo driverem albo klientem");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako driver, mozesz byc albo driverem albo klientem");
                 System.out.println("Driver already registered: " + driver.number);
                 return;
             }
@@ -188,22 +188,22 @@ public class Feature {
         if (aMessageContent.toLowerCase().equals("request-driver")) { //sprawdzamy pracownika
             Optional<Client> opClient = service.getClient(aSender);
             if (!opClient.isPresent()) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie jesteś clientem, a tylko klient moze zglaszac wycieczki‍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie jestes clientem, a tylko klient moze zglaszac wycieczki‍");
                 return;
             }
             final Client client = opClient.get();
             final Ride ride = new Ride(client);
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało przyjęte");
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgloszenie zostalo przyjete");
             itsLocationProcessor.requestLocation(aSender, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.client.number, "Zgłoszenie zostało przyjęte", location);
+                    sendLocalizationMMS(ride.client.number, "Zgloszenie zostalo przyjete", location);
                     service.drivers.forEach(new Consumer<Driver>() {
                         @Override
                         public void accept(final Driver driver) {
                             sendLocalizationMMS(
                                     driver.number,
-                                    "Pojawiło się nowe zgłoszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:" + ride.number + "' aby przyjąć zgłoszenie",
+                                    "Pojawilo się nowe zgloszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:" + ride.number + "' aby przyjąć zgloszenie",
                                     location);
                         }
                     });
@@ -216,12 +216,12 @@ public class Feature {
             String rideNumber = aMessageContent.split(":")[1];
             Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
             if (!opRide.isPresent()) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgłoszenia‍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgloszenia‍");
                 return;
             }
             Ride ride = opRide.get();
             if (ride.active) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało już przyjęte‍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgloszenie zostalo juz przyjete‍");
                 return;
             }
 
@@ -232,13 +232,13 @@ public class Feature {
             itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.client.number, "Zgłoszenie zostało przyjęte", location);
+                    sendLocalizationMMS(ride.client.number, "Zgloszenie zostalo przyjęte", location);
                 }
             });
             itsLocationProcessor.requestLocation(ride.client.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.driver.number, "Zgłoszenie zostało przyjęte", location);
+                    sendLocalizationMMS(ride.driver.number, "Zgloszenie zostalo przyjęte", location);
                 }
             });
         }
@@ -251,12 +251,12 @@ public class Feature {
             }
             Ride ride = opRide.get();
             if (ride.active) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało anulowane");
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało anulowane");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgloszenie zostalo anulowane");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgloszenie zostalo anulowane");
                 ride.active = false;
                 return;
             }
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda została już anulowana‍");
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda zostala juz anulowana‍");
         }
     }
 
