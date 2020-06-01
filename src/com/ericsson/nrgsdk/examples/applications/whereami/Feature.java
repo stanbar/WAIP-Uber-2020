@@ -312,8 +312,8 @@ public class Feature {
         s += "\n";
         s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
         s += "\n-------------------------------------------\n";
-        s += "\"registrer-driver:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
-        s += "\"registrer-client:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
+        s += "\"registrer-driver\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
+        s += "\"registrer-client\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
         s += "\"request-driver\" tworzy zlecenie\n";
         s += "\"biere:RIDE_NUMBER\" rezerwuje sesje \n";
         s += "\"stop\" zatrzymuje wycieczkę \n";
