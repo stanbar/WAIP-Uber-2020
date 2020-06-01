@@ -145,66 +145,66 @@ public class Feature {
      */
     protected void smsReceived(String aSender, String aReceiver,
                                String aMessageContent) {
-        System.out.println("Odebrano SMS-a o tresci: " + aMessageContent + " aSender: " + aSender);
+        System.out.println("Received a message: " + aMessageContent + " aSender: " + aSender);
 
         // Driver registration
         if (aMessageContent.toLowerCase().matches("register-driver")) {
             if (service.getDriver(aSender).isPresent()) {
                 Driver driver = service.getDriver(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You don't have to register you're already in the system");
                 System.out.println("Driver already registered: " + driver.number);
                 return;
             } else if (service.getClient(aSender).isPresent()) {
                 Client client = service.getClient(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako client, mozesz byc albo driverem albo clientem");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're already registered as client, you can be a client or a driver not both.");
                 System.out.println("Client already registered: " + client.number);
                 return;
             }
             Driver driver = new Driver(aSender);
             service.drivers.add(driver);
-            System.out.println("Dodano drivera o numerze: " + driver.number);
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
+            System.out.println("Added driver with number: " + driver.number);
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're our new driver");
         }
 
         // Client registration
         if (aMessageContent.toLowerCase().matches("register-client")) {
             if (service.getClient(aSender).isPresent()) {
                 Client client = service.getClient(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz czlonkiem serwisu");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're already a member of the system.");
                 System.out.println("Client already registered: " + client.number);
                 return;
             } else if (service.getDriver(aSender).isPresent()) {
                 Driver driver = service.getDriver(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako driver, mozesz byc albo driverem albo klientem");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're already registered as driver, you can be a client or a driver not both.");
                 System.out.println("Driver already registered: " + driver.number);
                 return;
             }
             Client client = new Client(aSender);
             service.clients.add(client);
-            System.out.println("Dodano clienta o numerze: " + client.number);
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
+            System.out.println("Added a client with number: " + client.number);
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're our new client");
         }
 
         if (aMessageContent.toLowerCase().equals("request-driver")) { //sprawdzamy pracownika
             Optional<Client> opClient = service.getClient(aSender);
             if (!opClient.isPresent()) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie jestes clientem, a tylko klient moze zglaszac wycieczki‍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're not a client. Only a client can request a ride.");
                 return;
             }
             final Client client = opClient.get();
             final Ride ride = new Ride(client);
             service.addRide(ride);
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgloszenie zostalo przyjete");
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "The request has been accepted.");
             itsLocationProcessor.requestLocation(aSender, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.client.number, "Zgloszenie zostalo przyjete", location);
+                    sendLocalizationMMS(ride.client.number, "The request has beend accepted.", location);
                     service.drivers.forEach(new Consumer<Driver>() {
                         @Override
                         public void accept(final Driver driver) {
                             sendLocalizationMMS(
                                     driver.number,
-                                    "Pojawilo się nowe zgloszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:" + ride.number + "' aby przyjąć zgloszenie",
+                                    "A new submission has occurred with number: " + ride.number + " respond to the message and type 'biere:" + ride.number + "' to accept request.",
                                     location);
                         }
                     });
@@ -239,7 +239,7 @@ public class Feature {
             itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
-                    sendLocalizationMMS(ride.client.number, "Your uber is on the way, cruisin down the street in his 64", location);
+                    sendLocalizationMMS(ride.client.number, "Your driver is on the way!", location);
                     System.out.println("Send MMS");
                 }
             });
@@ -248,13 +248,13 @@ public class Feature {
         if (aMessageContent.toLowerCase().equals("stop")) { //sprawdzamy pracownika
             Optional<Ride> opRide = service.getActiveRideForClientOrDriver(aSender);
             if (!opRide.isPresent()) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie masz aktywnej jazdy‍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You don't have an active ride.");
                 return;
             }
             Ride ride = opRide.get();
             if (ride.active) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgloszenie zostalo anulowane");
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgloszenie zostalo anulowane");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Request has been canceled");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Request has been canceled");
                 ride.active = false;
                 ride.finished = true;
                 return;
@@ -311,7 +311,7 @@ public class Feature {
      * configuration.
      */
     private String getDescription() {
-        String s = "Nacisnij START, aby sie polaczyc z symulatorem";
+        String s = "Nacisnij START, aby polaczyc sie z symulatorem";
         s += "\n";
         s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
         s += "\n-------------------------------------------\n";
@@ -319,7 +319,7 @@ public class Feature {
         s += "\"register-client\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
         s += "\"request-driver\" tworzy zlecenie\n";
         s += "\"biere:RIDE_NUMBER\" rezerwuje sesje \n";
-        s += "\"stop\" zatrzymuje wycieczkę \n";
+        s += "\"stop\" zatrzymuje jazde \n";
         s += "\n-------------------------------------------\n";
         s += "Nacisnij STOP, aby zatrzymac aplikacje.\n";
         return s;
