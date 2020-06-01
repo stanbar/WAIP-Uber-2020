@@ -29,296 +29,288 @@ import com.ericsson.nrgsdk.examples.tools.SDKToolkit;
 import com.ericsson.nrgsdk.examples.applications.whereami.models.*;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
 /**
  * This class implements the logic of the application. It uses processors to
  * interact with Ericsson Network Resource Gateway.
  */
-public class Feature{
+public class Feature {
 
-	private FWproxy itsFramework;
+    private FWproxy itsFramework;
 
-	private IpHosaUIManager itsHosaUIManager;
+    private IpHosaUIManager itsHosaUIManager;
 
-	private IpUserLocation itsOsaULManager;
+    private IpUserLocation itsOsaULManager;
 
-	private SMSProcessor itsSMSProcessor;
+    private SMSProcessor itsSMSProcessor;
 
-	private MMSProcessor itsMMSProcessor;
+    private MMSProcessor itsMMSProcessor;
 
-	private LocationProcessor itsLocationProcessor;
+    private LocationProcessor itsLocationProcessor;
 
-	final private GUI theGUI;
+    final private GUI theGUI;
 
-	private Integer assignmentId;
+    private Integer assignmentId;
 
-	final private Service service;
-	
-	private static String locationCheck = "";
+    final private Service service;
 
-
-	/**
-	 * Initializes a new instance, without starting interaction with Ericsson
-	 * Network Resource Gateway (see start)
-	 *
-	 * @param aGUI
-	 *            the GUI of the application
-	 */
-	public Feature(GUI aGUI, Service service) {
-		theGUI = aGUI;
-		this.service = service;
-		aGUI.setTitle("Worker control application");
-		aGUI.addTab("Description", getDescription());
-		
-
-	}
-
-	/**
-	 * Starts interaction with the Ericsson Network Resource Gateway. Note: this
-	 * method is intended to be called at most once.
-	 */
-	protected void start() {
-		HOSAMonitor.addListener(SDKToolkit.LOGGER);
-		itsFramework = new FWproxy(Configuration.INSTANCE);
-		try
-		{
-			itsHosaUIManager = (IpHosaUIManager) itsFramework
-					.obtainSCF("SP_HOSA_USER_INTERACTION");
-			itsOsaULManager = (IpUserLocation) itsFramework
-					.obtainSCF("P_USER_LOCATION");
-		}
-		catch (P_UNKNOWN_SERVICE_TYPE anException)
-		{
-			System.err.println("Service not found. Please refer to the Ericsson Network Resource Gateway User Guide for "
-					+ "a list of which applications that are able to run on which test tools\n"
-					+ anException);
-		}
-		itsSMSProcessor = new SMSProcessor(itsHosaUIManager, this);
-		itsMMSProcessor = new MMSProcessor(itsHosaUIManager, this);
-		itsLocationProcessor = new LocationProcessor(itsOsaULManager, this);
-		System.out.println("Starting SMS notification");
-		assignmentId = new Integer(itsSMSProcessor.startNotifications(Configuration.INSTANCE.getProperty("serviceNumber")));
-	}
-
-	/**
-	 * Stops interaction with the Ericsson Network Resource Gateway and disposes
-	 * of all resources allocated by this instance. Note: this method is
-	 * intended to be called at most once.
-	 */
-	public void stop() {
-		System.out.println("Stopping SMS notification");
-		if (assignmentId != null) {
-			itsSMSProcessor.stopNotifications(assignmentId.intValue());
-		}
-		assignmentId = null;
-		System.out.println("Disposing processor");
-		if (itsSMSProcessor != null) {
-			itsSMSProcessor.dispose();
-		}
-		if (itsMMSProcessor != null) {
-			itsMMSProcessor.dispose();
-		}
-		if (itsLocationProcessor != null) {
-			itsLocationProcessor.dispose();
-		}
-		System.out.println("Disposing service manager");
-		if (itsHosaUIManager != null) {
-			itsFramework.releaseSCF(itsHosaUIManager);
-		}
-		if (itsOsaULManager != null) {
-			itsFramework.releaseSCF(itsOsaULManager);
-		}
-		System.out.println("Disposing framework");
-		if (itsFramework != null) {
-			itsFramework.endAccess();
-			itsFramework.dispose();
-		}
-		System.out.println("Stopping Parlay tracing");
-		HOSAMonitor.removeListener(SDKToolkit.LOGGER);
-		System.exit(0);
-	}
-
-	/**
-	 * Invoked by the SMSProcessor, when a notification is received.
-	 * @throws Exception
-	 */
-	protected void smsReceived(String aSender, String aReceiver,
-							   String aMessageContent) {
-		System.out.println("Odebrano SMS-a o tresci: " + aMessageContent);
-
-		// Driver registration
-		if (aMessageContent.toLowerCase().matches("register-driver:(.*)")) {
-			if(service.getDriver(aSender).isPresent()) {
-				Driver driver = service.getDriver(aSender).get();
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
-				System.out.println("Driver already registered: " + driver.number);
-				return;
-			}
-			Driver driver = new Driver(aSender, getName(aMessageContent));
-			service.drivers.add(driver);
-			System.out.println("Dodano drivera o numerze: " + driver.number);
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
-		}
-		
-		// Client registration
-		if (aMessageContent.toLowerCase().matches("register-client:(.*)")) {
-			if(service.getClient(aSender).isPresent()) {
-				Client client = service.getClient(aSender).get();
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
-				System.out.println("Client already registered: " + client.number);
-				return;
-			}
-			Client client = new Client(aSender, getName(aMessageContent), itsLocationProcessor);
-			service.clients.add(client);
-			System.out.println("Dodano clienta o numerze: " + client.number);
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
-		}
-
-		if (aMessageContent.toLowerCase().matches("where-client:(.*)")){ //zapytanie o lokalizacje danego numeru
-			String reqNum = aMessageContent.split(":")[1];
-			if (service.getClient(reqNum).isPresent()){
-				itsLocationProcessor.requestLocation(reqNum);
-				if (locationCheck != ""){
-					itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Client uzywajacy numeru " + reqNum + " jest w pracy");
-				} else {
-					itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Client uzywajacego numeru " + reqNum + " nie ma w pracy");
-				}
-			}
-		}
-		
-		if (aMessageContent.toLowerCase().equals("request-driver:(.*)")) { //sprawdzamy pracownika
-			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
-			Client client = service.getClient(aSender).get();
-			final Ride ride = new Ride(client);
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender, "Zgłoszenie zostało przyjęte");
-			service.drivers.forEach(new Consumer<Driver>() {
-				@Override
-				public void accept(final Driver driver) {
-						itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), driver.number, "Pojawiło się nowe zgłoszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:"+ride.number+"' aby przyjąć zgłoszenie");	
-				}
-			});
-		}
-		
-		if (aMessageContent.toLowerCase().equals("biere:(.*)")) { //sprawdzamy pracownika
-			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
-			String rideNumber = aMessageContent.split(":")[1];
-			Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
-			if(!opRide.isPresent()) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgłoszenia 🤷‍");
-				return;
-			}
-			Ride ride = opRide.get();
-			if(ride.active) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało już przyjęte 🤷‍");
-				return;
-			}
-			
-			ride.active = true;
-			
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało przyjęte 👍");
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało przyjęte 👍");
-		}
-		
-		if (aMessageContent.toLowerCase().equals("cancel")) { //sprawdzamy pracownika
-			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
-			Optional<Ride> opRide = service.getActiveRideForClientOrDriver(aSender);
-			if(!opRide.isPresent()) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie masz aktywnej jazdy 🤷‍");
-				return;
-			}
-			Ride ride = opRide.get();
-			if(ride.active) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało anulowane 👍");
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało anulowane 👍");
-				ride.active = false;
-				return;
-			}
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda została już anulowana 🤷‍");
-		}
-	}
-
-	private String getName(String aMessageContent){
-		return aMessageContent.split(":")[1];
-	}
-
-	//TODO: funkcja ta musi jakos zwracac, czy uzytkownik jest w pracy, czy nie, aby mozna bylo egzekwowac czas pracy
-	public void locationReceived(String user, float latitude, float longitude) {
-		try {
-
-			//Map
-			ImageIcon map = Configuration.INSTANCE.getImage("map.gif");
-			int wm = map.getIconWidth();
-			int hm = map.getIconHeight();
-
-			//Phone
-			ImageIcon phone = Configuration.INSTANCE.getImage("phone.png");
-			int wp = phone.getIconWidth();
-			int hp = phone.getIconHeight();
-
-			if (latitude < 0) {
-				latitude = 0;
-			}
-			if (latitude > 1) {
-				latitude = 1;
-			}
-			if (longitude < 0) {
-				longitude = 0;
-			}
-			if (longitude > 1) {
-				longitude = 1;
-			}
+    private static String locationCheck = "";
 
 
-			int x = (int) (latitude * wm - wp / 2);
-			int y = (int) (longitude * hm - hp / 2);
-			Plotter plotter = new Plotter(wm, hm);
-			plotter.drawImage(map.getImage(), 0, 0, theGUI);
-			plotter.drawImage(phone.getImage(), x, y, theGUI);
-			MMSMessageContent messageContent = new MMSMessageContent();
-			messageContent.addMedia(plotter.createDataSource());
-			itsMMSProcessor.sendMMS(Configuration.INSTANCE.getProperty("serviceNumber"), user, messageContent
-					.getBinaryContent(), "Current location");
+    /**
+     * Initializes a new instance, without starting interaction with Ericsson
+     * Network Resource Gateway (see start)
+     *
+     * @param aGUI the GUI of the application
+     */
+    public Feature(GUI aGUI, Service service) {
+        theGUI = aGUI;
+        this.service = service;
+        aGUI.setTitle("Worker control application");
+        aGUI.addTab("Description", getDescription());
 
-			if(latitude > 0.59 && latitude < 0.68 && longitude > 0.28 && longitude < 0.4) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), user , "Witaj w pracy korposzczurku!");
-				System.out.println("Witaj w pracy korposzczurku!" + user);
-				locationCheck = "at_work";
-			}
-			else{
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),user ,"Nie znajdujesz sie w pracy!");
-				System.out.println("Nie znajdujesz sie w pracy!" + user);
-				locationCheck = "not_at_work";
-			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    }
 
-	/**
-	 * @return a descriptive text that explains the application and its
-	 *         configuration.
-	 */
-	private String getDescription() {
-		String s = "Nacisnij START, aby sie polaczyc z symulatorem";
-		s += "\n";
-		s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
-		s += "\n-------------------------------------------\n";
-		s += "\"registrer-driver:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
-		s += "\"registrer-client:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
-		s += "\"gdzie:NUMER_CLIENTA \" pozwala każdemu uzytkownikowi sprawdzić gdzie jest klient\n";
-		s += "\"start\" pozwala uzytkownikowi na rozpoczecie rejestrowania czasu pracy \n";
-		s += "\"stop\" pozwala uzytkownikowi na zakonczenie rejestrowania czasu pracy \n";
-		s += "\"pauza\" pozwala uzytkownikowi rozpoczecie 15 minutowej przerwy \n";
-		s += "\"status\" pozwala uzytkownikowi na sprawdzenie czasu pracy do konca dnia \n";
-		s += "\"lokalizacja \" pozwala uzytkownikowi na zwrocenie aktualnej lokalizacji \n";
-		s += "\"zapkalendarz:DZIEN_MIESIACA(DD),GODZINA(HH) \" pozwala uzytkownikowi na zajecie terminu w kalendarzu(np. zapkalendarz:02,14) \n";
-		s += "\"sprkalendarz:DZIEN_MIESIACA(DD),GODZINA(HH) \" pozwala uzytkownikowi na sprawdzenie czy w danym terminie jest zajety (np. sprkalendarz:31,06)\n";
-		s += "\n-------------------------------------------\n";
-		s += "Nacisnij STOP, aby zatrzymac aplikacje.\n";
-		return s;
-	}
+    /**
+     * Starts interaction with the Ericsson Network Resource Gateway. Note: this
+     * method is intended to be called at most once.
+     */
+    protected void start() {
+        HOSAMonitor.addListener(SDKToolkit.LOGGER);
+        itsFramework = new FWproxy(Configuration.INSTANCE);
+        try {
+            itsHosaUIManager = (IpHosaUIManager) itsFramework
+                    .obtainSCF("SP_HOSA_USER_INTERACTION");
+            itsOsaULManager = (IpUserLocation) itsFramework
+                    .obtainSCF("P_USER_LOCATION");
+        } catch (P_UNKNOWN_SERVICE_TYPE anException) {
+            System.err.println("Service not found. Please refer to the Ericsson Network Resource Gateway User Guide for "
+                    + "a list of which applications that are able to run on which test tools\n"
+                    + anException);
+        }
+        itsSMSProcessor = new SMSProcessor(itsHosaUIManager, this);
+        itsMMSProcessor = new MMSProcessor(itsHosaUIManager, this);
+        itsLocationProcessor = new LocationProcessor(itsOsaULManager, this);
+        System.out.println("Starting SMS notification");
+        assignmentId = new Integer(itsSMSProcessor.startNotifications(Configuration.INSTANCE.getProperty("serviceNumber")));
+    }
+
+    /**
+     * Stops interaction with the Ericsson Network Resource Gateway and disposes
+     * of all resources allocated by this instance. Note: this method is
+     * intended to be called at most once.
+     */
+    public void stop() {
+        System.out.println("Stopping SMS notification");
+        if (assignmentId != null) {
+            itsSMSProcessor.stopNotifications(assignmentId.intValue());
+        }
+        assignmentId = null;
+        System.out.println("Disposing processor");
+        if (itsSMSProcessor != null) {
+            itsSMSProcessor.dispose();
+        }
+        if (itsMMSProcessor != null) {
+            itsMMSProcessor.dispose();
+        }
+        if (itsLocationProcessor != null) {
+            itsLocationProcessor.dispose();
+        }
+        System.out.println("Disposing service manager");
+        if (itsHosaUIManager != null) {
+            itsFramework.releaseSCF(itsHosaUIManager);
+        }
+        if (itsOsaULManager != null) {
+            itsFramework.releaseSCF(itsOsaULManager);
+        }
+        System.out.println("Disposing framework");
+        if (itsFramework != null) {
+            itsFramework.endAccess();
+            itsFramework.dispose();
+        }
+        System.out.println("Stopping Parlay tracing");
+        HOSAMonitor.removeListener(SDKToolkit.LOGGER);
+        System.exit(0);
+    }
+
+    /**
+     * Invoked by the SMSProcessor, when a notification is received.
+     *
+     * @throws Exception
+     */
+    protected void smsReceived(String aSender, String aReceiver,
+                               String aMessageContent) {
+        System.out.println("Odebrano SMS-a o tresci: " + aMessageContent);
+
+        // Driver registration
+        if (aMessageContent.toLowerCase().matches("register-driver:(.*)")) {
+            if (service.getDriver(aSender).isPresent()) {
+                Driver driver = service.getDriver(aSender).get();
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
+                System.out.println("Driver already registered: " + driver.number);
+                return;
+            }
+            Driver driver = new Driver(aSender, getName(aMessageContent));
+            service.drivers.add(driver);
+            System.out.println("Dodano drivera o numerze: " + driver.number);
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
+        }
+
+        // Client registration
+        if (aMessageContent.toLowerCase().matches("register-client:(.*)")) {
+            if (service.getClient(aSender).isPresent()) {
+                Client client = service.getClient(aSender).get();
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
+                System.out.println("Client already registered: " + client.number);
+                return;
+            }
+            Client client = new Client(aSender, getName(aMessageContent));
+            service.clients.add(client);
+            System.out.println("Dodano clienta o numerze: " + client.number);
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
+        }
+
+        if (aMessageContent.toLowerCase().equals("request-driver")) { //sprawdzamy pracownika
+            final Client client = service.getClient(aSender).get();
+            final Ride ride = new Ride(client);
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało przyjęte");
+            itsLocationProcessor.requestLocation(aSender, new BiConsumer<String, Location>() {
+                @Override
+                public void accept(String s, Location location) {
+                    sendLocalizationMMS(ride.client.number, "Zgłoszenie zostało przyjęte 👍", location);
+                    service.drivers.forEach(new Consumer<Driver>() {
+                        @Override
+                        public void accept(final Driver driver) {
+                            sendLocalizationMMS(
+                                    driver.number,
+                                    "Pojawiło się nowe zgłoszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:" + ride.number + "' aby przyjąć zgłoszenie",
+                                    location);
+                        }
+                    });
+                }
+
+            });
+        }
+
+        if (aMessageContent.toLowerCase().equals("biere:(.*)")) { //sprawdzamy pracownika
+            String rideNumber = aMessageContent.split(":")[1];
+            Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
+            if (!opRide.isPresent()) {
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgłoszenia 🤷‍");
+                return;
+            }
+            Ride ride = opRide.get();
+            if (ride.active) {
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało już przyjęte 🤷‍");
+                return;
+            }
+
+            Driver driver = service.getDriver(aSender).get();
+            ride.driver = driver;
+            ride.active = true;
+
+            itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
+                @Override
+                public void accept(String s, Location location) {
+                    sendLocalizationMMS(ride.client.number, "Zgłoszenie zostało przyjęte 👍", location);
+                }
+            });
+            itsLocationProcessor.requestLocation(ride.client.number, new BiConsumer<String, Location>() {
+                @Override
+                public void accept(String s, Location location) {
+                    sendLocalizationMMS(ride.driver.number, "Zgłoszenie zostało przyjęte 👍", location);
+                }
+            });
+        }
+
+        if (aMessageContent.toLowerCase().equals("stop")) { //sprawdzamy pracownika
+            Optional<Ride> opRide = service.getActiveRideForClientOrDriver(aSender);
+            if (!opRide.isPresent()) {
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie masz aktywnej jazdy 🤷‍");
+                return;
+            }
+            Ride ride = opRide.get();
+            if (ride.active) {
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało anulowane 👍");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało anulowane 👍");
+                ride.active = false;
+                return;
+            }
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda została już anulowana 🤷‍");
+        }
+    }
+
+    private String getName(String aMessageContent) {
+        return aMessageContent.split(":")[1];
+    }
+
+    public void sendLocalizationMMS(String to, String message, Location location) {
+        float latitude = location.latitude;
+        float longitude = location.longitude;
+        try {
+
+            //Map
+            ImageIcon map = Configuration.INSTANCE.getImage("map.gif");
+            int wm = map.getIconWidth();
+            int hm = map.getIconHeight();
+
+            //Phone
+            ImageIcon phone = Configuration.INSTANCE.getImage("phone.png");
+            int wp = phone.getIconWidth();
+            int hp = phone.getIconHeight();
+
+            if (latitude < 0) {
+                latitude = 0;
+            }
+            if (latitude > 1) {
+                latitude = 1;
+            }
+            if (longitude < 0) {
+                longitude = 0;
+            }
+            if (longitude > 1) {
+                longitude = 1;
+            }
+
+
+            int x = (int) (latitude * wm - wp / 2);
+            int y = (int) (longitude * hm - hp / 2);
+            Plotter plotter = new Plotter(wm, hm);
+            plotter.drawImage(map.getImage(), 0, 0, theGUI);
+            plotter.drawImage(phone.getImage(), x, y, theGUI);
+            MMSMessageContent messageContent = new MMSMessageContent();
+            messageContent.addMedia(plotter.createDataSource());
+            messageContent.addTextMedia(message);
+            itsMMSProcessor.sendMMS(Configuration.INSTANCE.getProperty("serviceNumber"), to, messageContent
+                    .getBinaryContent(), "Current location");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @return a descriptive text that explains the application and its
+     * configuration.
+     */
+    private String getDescription() {
+        String s = "Nacisnij START, aby sie polaczyc z symulatorem";
+        s += "\n";
+        s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
+        s += "\n-------------------------------------------\n";
+        s += "\"registrer-driver:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
+        s += "\"registrer-client:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
+        s += "\"request-driver\" tworzy zlecenie\n";
+        s += "\"biere:RIDE_NUMBER\" rezerwuje sesje \n";
+        s += "\"stop\" zatrzymuje wycieczkę \n";
+        s += "\n-------------------------------------------\n";
+        s += "Nacisnij STOP, aby zatrzymac aplikacje.\n";
+        return s;
+    }
 
 
 }
