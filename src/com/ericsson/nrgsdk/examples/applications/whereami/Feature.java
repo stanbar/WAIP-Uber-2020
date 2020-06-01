@@ -214,14 +214,17 @@ public class Feature {
 
         if (aMessageContent.toLowerCase().matches("biere:(.*)")) { //sprawdzamy pracownika
             String rideNumber = aMessageContent.split(":")[1];
+            System.out.println("biere ride: "+rideNumber);
             Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
             if (!opRide.isPresent()) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgloszenia‍");
+                System.out.println("There is no such ride");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "There is no such ride");
                 return;
             }
             Ride ride = opRide.get();
             if (ride.active) {
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgloszenie zostalo juz przyjete‍");
+                System.out.println("This ride is already taken, good luck next time");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "This ride is already taken, good luck next time");
                 return;
             }
 
