@@ -34,23 +34,28 @@ public class Main {
 
 	private Feature itsFeature;
 
-    /**
-     * Method called by the JVM to launch the application.
-     * @param args not used
-     * @throws Exception 
-     */
+	/**
+	 * Method called by the JVM to launch the application.
+	 * 
+	 * @param args not used
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 		new Main();
 	}
 
-    /**
-     * Creates a new instance of <code>Main</code>.
-     * @throws IOException when no configuration file is found, usally the configuration and 
-     * additional resources is located under ./resources If this location cannot be used the
-     * application will start to look for a configuration file located in the file system named as:
-     * (packagename).ini for example if the application is of package com.ericsson.nrgsdk.examples.applications.callrouter
-     * the searched ini file will be named callrouter.ini
-     */
+	/**
+	 * Creates a new instance of <code>Main</code>.
+	 * 
+	 * @throws IOException when no configuration file is found, usally the
+	 *                     configuration and additional resources is located under
+	 *                     ./resources If this location cannot be used the
+	 *                     application will start to look for a configuration file
+	 *                     located in the file system named as: (packagename).ini
+	 *                     for example if the application is of package
+	 *                     com.ericsson.nrgsdk.examples.applications.callrouter the
+	 *                     searched ini file will be named callrouter.ini
+	 */
 	public Main() throws IOException {
 		Configuration.INSTANCE.load(this);
 		GUI gui = new GUI();
@@ -60,9 +65,9 @@ public class Main {
 				start();
 			}
 		});
-		Service service = new Service(); 
+		Service service = new Service();
 		itsFeature = new Feature(gui, service);
-		
+
 		gui.addButton(new AbstractAction("Stop") {
 
 			public void actionPerformed(ActionEvent e) {

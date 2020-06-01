@@ -1,15 +1,11 @@
 package com.ericsson.nrgsdk.examples.applications.whereami.models;
 
-import com.ericsson.nrgsdk.examples.applications.whereami.LocationProcessor;
 
-public class Client {
-	public String number;
+public class Client extends Localized {
 	public String destination;
-	private LocationProcessor locationProcessor;
 	
-	public Client(String number, String name, LocationProcessor locationProcessor){
+	public Client(String number, String name){
 		this.number = number;
-		this.locationProcessor = locationProcessor;
 	}
 	
 	@Override

@@ -29,11 +29,8 @@ import com.ericsson.nrgsdk.examples.tools.SDKToolkit;
 import com.ericsson.nrgsdk.examples.applications.whereami.models.*;
 
 import javax.swing.*;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 /**
  * This class implements the logic of the application. It uses processors to
  * interact with Ericsson Network Resource Gateway.
@@ -158,7 +155,7 @@ public class Feature{
 				System.out.println("Driver already registered: " + driver.number);
 				return;
 			}
-			Driver driver = new Driver(aSender, getName(aMessageContent), itsLocationProcessor);
+			Driver driver = new Driver(aSender, getName(aMessageContent));
 			service.drivers.add(driver);
 			System.out.println("Dodano drivera o numerze: " + driver.number);
 			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
@@ -178,154 +175,71 @@ public class Feature{
 			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
 		}
 
-		
-		
-		
-		// TODO
-		
-		
-		// worker chce zaczac monitorowac czas pracy
-		// jezeli wszystko git, zaczynamy liczenie czasu od momentu request'a
-		if (aMessageContent.toLowerCase().equals("start") && worker != null ) { //sprawdzamy pracownika
-			locationCheck="";
-			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
-			if(locationCheck.matches("at_work")){
-				LocalDateTime workerStartedAt = LocalDateTime.now();
-				worker.setStartedWorkAt(workerStartedAt);
-				//itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender,"Witaj w pracy!");
-				locationCheck="";
-			}
-			else{
-				//itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender,"Nie znajdujesz sie w pracy!");
-				locationCheck="";
-			}
-		}
-
-		//Zatrzymanie rejestrowania czasu pracy przez pracownika
-		if (aMessageContent.toLowerCase().equals("stop") && worker != null ) {
-			LocalDateTime workerEndedAt = LocalDateTime.now();
-			worker.setStartedWorkAt(workerEndedAt);
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender,"Do zobaczenia jutro :>!");
-		}
-
-		/* 15 minut przerwy
-		   zacznij rejestrowac czas pracy po czasie przerwy  - sprawdzajac najpierw lokalizacje, czy pracownik jest w pracy
-		   jezeli nie ma go w pracy po przerwie, zakoncz prace */
-		if (aMessageContent.toLowerCase().equals("pauza") && worker != null ) {
-			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender,"Zaczynasz pauze, odpocznij, masz 15 minut! :>! Po pauzie wyslij 'koniecpauzy");
-			/*pytanie, jak po tych "15 minutach" sprawdzic, czy pracownik wrocil do firmy, bo interesuje nas jego polozenie,
-			czy robimy thread.sleep i czekamy, czy wychodzimy stad i za jakis czas powrot do sprawdzenia?
-			*/
-			worker.setPauseStart(LocalDateTime.now());
-		}
-
-		if (aMessageContent.toLowerCase().equals("koniecpauzy") && worker != null ) {
-			if (worker.getPauseStart() == null) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Blad! Najpierw trzeba zaczac pauze.");
-			} else {
-				long pauseMinutes = ChronoUnit.MINUTES.between(worker.getPauseStart(), LocalDateTime.now());
-				if (pauseMinutes > worker.getPauseLength()) {
-					worker.getStartedWorkAt().minus((pauseMinutes - worker.getPauseLength()), ChronoUnit.MINUTES);
-					itsSMSProcessor
-							.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,
-									"Pauzowales za dlugo. " + (pauseMinutes - worker.getPauseLength()) + "do odpracowania.");
+		if (aMessageContent.toLowerCase().matches("where-client:(.*)")){ //zapytanie o lokalizacje danego numeru
+			String reqNum = aMessageContent.split(":")[1];
+			if (service.getClient(reqNum).isPresent()){
+				itsLocationProcessor.requestLocation(reqNum);
+				if (locationCheck != ""){
+					itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Client uzywajacy numeru " + reqNum + " jest w pracy");
 				} else {
-					itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Witaj ponownie! :)");
+					itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Client uzywajacego numeru " + reqNum + " nie ma w pracy");
 				}
 			}
 		}
-
-		if (aMessageContent.toLowerCase().equals("lokalizacja") && worker != null ) {
-			itsLocationProcessor.requestLocation(aSender);
-		}
-
-		if (aMessageContent.toLowerCase().matches("zapkalendarz:(.*)") && worker != null){
-			String day = getDay(aMessageContent);
-			String hour = getHour(aMessageContent);
-			if(worker.setCalendar(Integer.parseInt(day),Integer.parseInt(hour)) == 0){
-				System.out.println("Pomyslnie dokonano wpisu do kalendarza dnia "+day+" o godzinie "+hour);
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Pomyslnie dokonano wpisu do kalendarza dnia "+day+" o godzinie "+hour);
-			}else{
-				System.out.println("Termin dnia "+day+" o godzinie "+hour+" jest juz zajety");
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Termin dnia "+day+" o godzinie "+hour+" jest juz zajety");
-			}
-		}
-
-		if (aMessageContent.toLowerCase().matches("sprkalendarz:(.*)") && worker != null){
-			String day = getDay(aMessageContent);
-			String hour = getHour(aMessageContent);
-			if(worker.setCalendar(Integer.parseInt(day),Integer.parseInt(hour)) == 0){
-				System.out.println("Termin dnia "+day+" o godzinie "+hour+" jest wolny");
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Termin dnia "+day+" o godzinie "+hour+" jest wolny");
-			}else{
-				System.out.println("Termin dnia "+day+" o godzinie "+hour+" jest zajety");
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Termin dnia "+day+" o godzinie "+hour+" jest zajety");
-			}
-		}
-
-		if (aMessageContent.toLowerCase().equals("status") && worker != null )
-		{
-			if (worker.getStartedWorkAt() == null) {
-				System.out.println("Nie zaczales jeszcze pracy.");
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Nie zaczales jeszcze pracy.");
-			} else if (worker.getEndedWorkAt() != null) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Praca zakonczona.");
-				System.out.println("Praca zakonczona.");
-			} else {
-				System.out.println(worker.getStartedWorkAt());
-				long minutes = ChronoUnit.MINUTES.between(worker.getStartedWorkAt(), LocalDateTime.now());
-				System.out.println(minutes);
-				long hours = 0;
-				long difference = 480 - minutes;
-				if (difference > 60) {
-					hours = difference / 60;
-					minutes = difference - hours*60;
+		
+		if (aMessageContent.toLowerCase().equals("request-driver:(.*)")) { //sprawdzamy pracownika
+			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
+			Client client = service.getClient(aSender).get();
+			final Ride ride = new Ride(client);
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),aSender, "Zgłoszenie zostało przyjęte");
+			service.drivers.forEach(new Consumer<Driver>() {
+				@Override
+				public void accept(final Driver driver) {
+						itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), driver.number, "Pojawiło się nowe zgłoszenie o numberze: " + ride.number + " odpowiedz na smsa o tresci 'biere:"+ride.number+"' aby przyjąć zgłoszenie");	
 				}
-
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Do konca pracy zostalo: " + hours + " godzin, " + minutes + " minut.");
-			}
-			//musimy zwrocic informacje od klasy Worker ile czasu zostalo do konca pracy, czy to procentowo, czy w godzinach
+			});
 		}
-
-		if (aMessageContent.toLowerCase().matches("gdzie:(.*)") && worker != null){ //zapytanie o lokalizacje danego numeru
-			if (managementNumbers.contains(worker.getNumer())) { //sprawdzamy czy numer danej osoby ma uprawnienia
-				//wez
-				String reqNum = aMessageContent.split(":")[1];
-				if (checkList(reqNum) != null){
-					itsLocationProcessor.requestLocation(reqNum);
-					if (locationCheck != ""){
-						itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Pracownik uzywajacy numeru " + reqNum + " jest w pracy");
-					} else {
-						itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Pracownika uzywajacego numeru " + reqNum + " nie ma w pracy");
-					}
-				}
-			} else {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender,"Nie masz uprawnien do tych danych!");
+		
+		if (aMessageContent.toLowerCase().equals("biere:(.*)")) { //sprawdzamy pracownika
+			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
+			String rideNumber = aMessageContent.split(":")[1];
+			Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
+			if(!opRide.isPresent()) {
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie ma takiego zgłoszenia 🤷‍");
+				return;
 			}
+			Ride ride = opRide.get();
+			if(ride.active) {
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało już przyjęte 🤷‍");
+				return;
+			}
+			
+			ride.active = true;
+			
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało przyjęte 👍");
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało przyjęte 👍");
 		}
-
-		if(worker == null){
-			// TODO: rzucamy wyjatek, ale gdzie go zlapiemy? ;)
+		
+		if (aMessageContent.toLowerCase().equals("cancel")) { //sprawdzamy pracownika
+			itsLocationProcessor.requestLocation(aSender); //sprawdzamy lokalizacje - nie mamy zwrotki od funkcji, trzeba dorobic!
+			Optional<Ride> opRide = service.getActiveRideForClientOrDriver(aSender);
+			if(!opRide.isPresent()) {
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie masz aktywnej jazdy 🤷‍");
+				return;
+			}
+			Ride ride = opRide.get();
+			if(ride.active) {
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Zgłoszenie zostało anulowane 👍");
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Zgłoszenie zostało anulowane 👍");
+				ride.active = false;
+				return;
+			}
+			itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jazda została już anulowana 🤷‍");
 		}
 	}
 
 	private String getName(String aMessageContent){
-		return aMessageContent.substring(aMessageContent.indexOf(":"));
-	}
-	private String getDay(String aMessageContent){
-		return aMessageContent.substring(13,15);
-	}
-	private String getHour(String aMessageContent){
-		return aMessageContent.substring(16,18);
-	}
-
-	private Worker checkList(String numer)
-	{
-		for (Worker w : service.getUserOfService())
-			if (w.getNumer().equalsIgnoreCase(numer))
-				return w;
-
-		return null;
+		return aMessageContent.split(":")[1];
 	}
 
 	//TODO: funkcja ta musi jakos zwracac, czy uzytkownik jest w pracy, czy nie, aby mozna bylo egzekwowac czas pracy
@@ -366,16 +280,13 @@ public class Feature{
 			itsMMSProcessor.sendMMS(Configuration.INSTANCE.getProperty("serviceNumber"), user, messageContent
 					.getBinaryContent(), "Current location");
 
-			Worker worker = checkList(user); // dostajemy naszego pracownika, ktory wyslal SMS'a
-
 			if(latitude > 0.59 && latitude < 0.68 && longitude > 0.28 && longitude < 0.4) {
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), user, "Witaj w pracy korposzczurku!");
-				worker.setStartedWorkAt(LocalDateTime.now());
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), user , "Witaj w pracy korposzczurku!");
 				System.out.println("Witaj w pracy korposzczurku!" + user);
 				locationCheck = "at_work";
 			}
 			else{
-				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),user,"Nie znajdujesz sie w pracy!");
+				itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"),user ,"Nie znajdujesz sie w pracy!");
 				System.out.println("Nie znajdujesz sie w pracy!" + user);
 				locationCheck = "not_at_work";
 			}
@@ -394,8 +305,9 @@ public class Feature{
 		s += "\n";
 		s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
 		s += "\n-------------------------------------------\n";
-		s += "\"registrer-driver:name\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
-		s += "\"registrer-client:name\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
+		s += "\"registrer-driver:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
+		s += "\"registrer-client:NUMBER\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
+		s += "\"gdzie:NUMER_CLIENTA \" pozwala każdemu uzytkownikowi sprawdzić gdzie jest klient\n";
 		s += "\"start\" pozwala uzytkownikowi na rozpoczecie rejestrowania czasu pracy \n";
 		s += "\"stop\" pozwala uzytkownikowi na zakonczenie rejestrowania czasu pracy \n";
 		s += "\"pauza\" pozwala uzytkownikowi rozpoczecie 15 minutowej przerwy \n";
@@ -403,7 +315,6 @@ public class Feature{
 		s += "\"lokalizacja \" pozwala uzytkownikowi na zwrocenie aktualnej lokalizacji \n";
 		s += "\"zapkalendarz:DZIEN_MIESIACA(DD),GODZINA(HH) \" pozwala uzytkownikowi na zajecie terminu w kalendarzu(np. zapkalendarz:02,14) \n";
 		s += "\"sprkalendarz:DZIEN_MIESIACA(DD),GODZINA(HH) \" pozwala uzytkownikowi na sprawdzenie czy w danym terminie jest zajety (np. sprkalendarz:31,06)\n";
-		s += "\"gdzie:NUMER_PRACOWNIKA \" pozwala uzytkownikowi bedacemu w zarzadzie na sprawdzenie czy pracownik jest w pracy\n";
 		s += "\n-------------------------------------------\n";
 		s += "Nacisnij STOP, aby zatrzymac aplikacje.\n";
 		return s;
