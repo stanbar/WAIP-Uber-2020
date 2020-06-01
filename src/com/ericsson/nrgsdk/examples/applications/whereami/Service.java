@@ -18,7 +18,7 @@ public class Service {
 		return drivers.stream().filter(new Predicate<Driver>() {
 			@Override
 			public boolean test(Driver driver) {
-				return number == driver.number;
+				return number.equals(driver.number);
 			}
 		}).findAny();
 	}
@@ -27,7 +27,7 @@ public class Service {
 		return clients.stream().filter(new Predicate<Client>() {
 			@Override
 			public boolean test(Client client) {
-				return number == client.number;
+				return number.equals(client.number);
 			}
 		}).findAny();
 	}
@@ -45,7 +45,7 @@ public class Service {
 		return rides.stream().filter(new Predicate<Ride>() {
 			@Override
 			public boolean test(Ride ride) {
-				return number == ride.client.number || number == ride.driver.number;
+				return number.equals(ride.client.number) || number.equals(ride.driver.number);
 			}
 		}).findAny();
 	}
