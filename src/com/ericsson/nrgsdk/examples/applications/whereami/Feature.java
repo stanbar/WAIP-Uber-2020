@@ -193,6 +193,7 @@ public class Feature {
             }
             final Client client = opClient.get();
             final Ride ride = new Ride(client);
+            service.addRide(ride);
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgloszenie zostalo przyjete");
             itsLocationProcessor.requestLocation(aSender, new BiConsumer<String, Location>() {
                 @Override
