@@ -212,7 +212,7 @@ public class Feature {
             });
         }
 
-        if (aMessageContent.toLowerCase().equals("biere:(.*)")) { //sprawdzamy pracownika
+        if (aMessageContent.toLowerCase().matches("biere:(.*)")) { //sprawdzamy pracownika
             String rideNumber = aMessageContent.split(":")[1];
             Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
             if (!opRide.isPresent()) {
