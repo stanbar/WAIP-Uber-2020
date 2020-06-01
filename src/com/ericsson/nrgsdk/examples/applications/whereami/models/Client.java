@@ -3,11 +3,11 @@ package com.ericsson.nrgsdk.examples.applications.whereami.models;
 
 public class Client extends Localized {
 	public String destination;
-	
-	public Client(String number, String name){
+
+	public Client(String number){
 		this.number = number;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -30,5 +30,5 @@ public class Client extends Localized {
 		} else if (!number.equals(other.number))
 			return false;
 		return true;
-	}	
+	}
 }

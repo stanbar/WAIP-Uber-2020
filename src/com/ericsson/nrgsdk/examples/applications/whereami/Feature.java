@@ -160,7 +160,7 @@ public class Feature {
                 System.out.println("Client already registered: " + client.number);
                 return;
             }
-            Driver driver = new Driver(aSender, getName(aMessageContent));
+            Driver driver = new Driver(aSender);
             service.drivers.add(driver);
             System.out.println("Dodano drivera o numerze: " + driver.number);
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym driverem serwisu");
@@ -179,7 +179,7 @@ public class Feature {
                 System.out.println("Driver already registered: " + driver.number);
                 return;
             }
-            Client client = new Client(aSender, getName(aMessageContent));
+            Client client = new Client(aSender);
             service.clients.add(client);
             System.out.println("Dodano clienta o numerze: " + client.number);
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes nowym clientem serwisu");
@@ -260,10 +260,6 @@ public class Feature {
         }
     }
 
-    private String getName(String aMessageContent) {
-        return aMessageContent.split(":")[1];
-    }
-
     public void sendLocalizationMMS(String to, String message, Location location) {
         float latitude = location.latitude;
         float longitude = location.longitude;
@@ -317,8 +313,8 @@ public class Feature {
         s += "\n";
         s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
         s += "\n-------------------------------------------\n";
-        s += "\"registrer-driver\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
-        s += "\"registrer-client\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
+        s += "\"register-driver\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
+        s += "\"register-client\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
         s += "\"request-driver\" tworzy zlecenie\n";
         s += "\"biere:RIDE_NUMBER\" rezerwuje sesje \n";
         s += "\"stop\" zatrzymuje wycieczkę \n";

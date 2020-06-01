@@ -5,11 +5,11 @@ public class Driver extends Localized {
 	public int ridesCnt;
 	public float avrgScore;
 	public boolean isWorking;
-	
-	public Driver(String number, String name){
+
+	public Driver(String number){
 		this.number = number;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -32,5 +32,5 @@ public class Driver extends Localized {
 		} else if (!number.equals(other.number))
 			return false;
 		return true;
-	}	
+	}
 }
