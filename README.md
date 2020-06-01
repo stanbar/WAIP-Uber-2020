@@ -1,7 +1,7 @@
 # INSTRUKCJA:
 ### Instalacja SDK Ericssona(Windows 10)
-1. Instalujemy SDK Ericssona + Java 1.8 (plik: WAIP_CD\Parlay\sdk\files\ericsson_nrgsdk_R5A02_setup.exe)
-2. Ogarniamy środowisko do Javy : Eclipse/IntelliJ, z konsoli nie damy rady. Preferowane: IntelliJ IDEA Community
+1. Instalujemy SDK Ericssona + Java 1.8 (plik: WAIP_CD\Parlay\sdk\files\ericsson_nrgsdk_R5A02_setup.exe - on zainstaluje Jave 1.3 dlatego warto odznaczyć i za wczasu pobrać wersję wymienioną wyżej)
+2. Środowisko dla Javy - dowolne aczkolwiek używany podczas projektu był Eclipse.
 3. Ustawiamy zmienne środowiskowe:
 ```
 JAVA_HOME = C:\Program Files\Java\jdk1.8.1_15 
@@ -11,26 +11,24 @@ PATH += %NRGSDK%\simulator\lib\net\erlang\bin
 PATH += %ANT_HOME%\bin
 PATH += %JAVA_HOME%\bin
 ```
-Reset kompa
+Następnie wykonujemy restart komputera
 
-
-
-### Najpierw sprawdzamy czy działa nam ogólnie symulator i połączenie z telefonami wewnątrz symulatora!
-1. Odpalamy NRG Simulator (C:\Program Files (x86)\Ericsson\Network Resource Gateway SDK\R5A02\run_simulator.bat) - najpierw wyskoczy cmd'ek i wam pobuduje jakieś śmieszne rzeczy, potem wystartuje GUI - cierpliwości.
-2. Dodajemy telefon : Edit -> Add phone -> dowolny adres, np 10123, model P800 może być - obojętne w sumie.
-3. Odpalamy mape : Edit -> Show map - powinno widać dwa telefony na mapie, które można po niej przesuwać - zmieniając ich współrzędne.
+### Sprawdzamy działanie symulatora i połączenia telefoniczne wewnątrz symulatora na przykładzie aplikacji Where Am I
+1. Włączamy NRG Simulator (C:\Program Files (x86)\Ericsson\Network Resource Gateway SDK\R5A02\run_simulator.bat) - najpierw wyskoczy nam cmd, następnie po jakiejś chwili zależnie od systemu - symulator.
+2. Dodajemy telefon : Edit -> Add phone -> dowolny adres, np 10123, model P800 lub P900 - zależy, który nam się podoba bardziej.
+3. Włączamy mapę : Edit -> Show map - powinno być widać dwa telefony na mapie, które można po niej przesuwać - zmieniając ich współrzędne.
 4. Odpalamy testową aplikacje: Applications -> Run -> Where Am I -> Run
-5. Dostaniemy popup z informacją o aplikacji i okno na logi. Na oknie whereAmI naciskamy start. 
-6. Naciskamy na nasz magiczny fajfon, a dokładniej na drugą ikonę, aby wysłać SMS'a. Treść smsa dowolna, byle na numer 6666.
-7. Jeżeli wszystko poszło dobrze, to pod kopertą (ostatnia ikona), będzie do odebrania MMS z mapą i naszą aktualną lokalizacją.
+5. Dostaniemy wiadomość popup z informacją o aplikacji i okno na logi. Na oknie whereAmI naciskamy start. 
+6. Naciskamy na nasz telefon, a dokładniej na drugą ikonę, aby wysłać SMS'a. Treść smsa jest dowolna, byle na numer 6666.
+7. Jeśli wszystko poszło pomyślnie to pod ikoną koperty będziemy mogli odberać wiadomość MMS z mapą i naszą aktualną lokalizacją.
 
 
 
-### Odebranie MMSa z poprawną lokalizacją potwierdza, iż symulator bangla i można przejść do testowania projektu 
-11. Zaciągamy to repo (po lewej jest przycisk Download) i wrzucić projekt do IDE
-12. Wyłączamy whereAmI i zamykamy okno z logami - symulator ma być w stanie "idle".
-13. Uruchamiamy projekt waipowy w IDE i paczymy w logi, czy wszystko wstało.
-14. Powinno ukazać się podobne okno z informacją o aplikacji, po czym wciśnięcie START nie powinno skutkować wybuchem aplikacji
-15. Jeżeli uruchomiony projekt w IDE śmiga, można normalnie bawić się w symulatorze, z tym, że aplikacja rusza z IDE, a nie prosto z tego śmiesznego Ericsson Network Resource Gateway Simulator.
+### Odebranie MMS'a z poprawną lokalizacją potwierdza poprawne działanie symulatora dzięki czemu możemy zająć się naszą aplikacją 
+11. Zaciągamy repozytorium i uruchamiamy je przez nasze IDE.
+12. Wyłączamy aplikację whereAmI i zamykamy okno z logami - symulator ma być w stanie "idle".
+13. Uruchamiamy projekt waipowy w IDE i sprawdzamy logi czy wszystko się uruchomiło.
+14. Powinno ukazać się podobne okno z informacją o aplikacji, jeśli tak się stało naciskamy przycisk START.
+15. Reszta przebiega według aplikacji i informacji napisanej w okienku, w którym nacisnęliśmy START.
 
 
