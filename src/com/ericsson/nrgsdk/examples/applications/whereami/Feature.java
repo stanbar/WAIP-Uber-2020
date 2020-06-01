@@ -186,7 +186,12 @@ public class Feature {
         }
 
         if (aMessageContent.toLowerCase().equals("request-driver")) { //sprawdzamy pracownika
-            final Client client = service.getClient(aSender).get();
+            Optional<Client> opClient = service.getClient(aSender);
+            if (!opClient.isPresent()) {
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie jesteś clientem, a tylko klient moze zglaszac wycieczki 🤷‍");
+                return;
+            }
+            final Client client = opClient.get();
             final Ride ride = new Ride(client);
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Zgłoszenie zostało przyjęte");
             itsLocationProcessor.requestLocation(aSender, new BiConsumer<String, Location>() {

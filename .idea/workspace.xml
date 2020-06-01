@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ec77e181-a97f-49c2-9f47-551f57da9103" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/ericsson/nrgsdk/examples/applications/whereami/Feature.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/ericsson/nrgsdk/examples/applications/whereami/Feature.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -10,7 +11,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="2474" />
+    <option name="totalTimeSeconds" value="3174" />
   </component>
   <component name="Git.Settings">
     <option name="PREVIOUS_COMMIT_AUTHORS">
@@ -103,7 +104,7 @@
       <option name="presentableId" value="Default" />
       <updated>1514469091607</updated>
       <workItem from="1591008545802" duration="1571000" />
-      <workItem from="1591019584458" duration="981000" />
+      <workItem from="1591019584458" duration="1928000" />
     </task>
     <task id="LOCAL-00001" summary="Test commit.">
       <created>1515536562421</created>
