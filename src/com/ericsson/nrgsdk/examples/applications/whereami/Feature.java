@@ -228,12 +228,15 @@ public class Feature {
             Driver driver = service.getDriver(aSender).get();
             ride.driver = driver;
             ride.active = true;
+            System.out.println("biere ride driver: "+ride.driver.number + " client: "+ride.client.number);
 
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.client.number, "Go and pick up the client !");
+            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Go and pick up the client !");
+            System.out.println("Sent SMS");
             itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
                     sendLocalizationMMS(ride.client.number, "Your uber is on the way, cruisin down the street in his 64", location);
+                    System.out.println("Send MMS");
                 }
             });
         }
