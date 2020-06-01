@@ -154,6 +154,11 @@ public class Feature {
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
                 System.out.println("Driver already registered: " + driver.number);
                 return;
+            } else if (service.getClient(aSender).isPresent()) {
+                Client client = service.getClient(aSender).get();
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako client, możesz być albo driverem albo clientem");
+                System.out.println("Client already registered: " + client.number);
+                return;
             }
             Driver driver = new Driver(aSender, getName(aMessageContent));
             service.drivers.add(driver);
@@ -165,8 +170,13 @@ public class Feature {
         if (aMessageContent.toLowerCase().matches("register-client")) {
             if (service.getClient(aSender).isPresent()) {
                 Client client = service.getClient(aSender).get();
-                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Nie musisz sie rejestrowac, jestes juz czlonkiem serwisu");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz czlonkiem serwisu");
                 System.out.println("Client already registered: " + client.number);
+                return;
+            } else if (service.getDriver(aSender).isPresent()) {
+                Driver driver = service.getDriver(aSender).get();
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "Jestes juz zarejestronway jako driver, możesz być albo driverem albo klientem");
+                System.out.println("Driver already registered: " + driver.number);
                 return;
             }
             Client client = new Client(aSender, getName(aMessageContent));
