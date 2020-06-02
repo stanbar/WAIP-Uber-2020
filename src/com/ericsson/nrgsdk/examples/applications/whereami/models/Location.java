@@ -1,11 +1,10 @@
 package com.ericsson.nrgsdk.examples.applications.whereami.models;
 
 public class Location {
-	public float longitude;
 	public float latitude;
-	public Location(float longitude, float latitude) {
-		super();
-		this.longitude = longitude;
+	public float longitude;
+	public Location(float latitude, float longitude) {
 		this.latitude = latitude;
+		this.longitude = longitude;
 	}
 }
