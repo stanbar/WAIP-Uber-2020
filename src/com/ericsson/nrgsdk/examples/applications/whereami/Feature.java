@@ -234,13 +234,18 @@ public class Feature {
             ride.active = true;
             System.out.println("take ride driver: "+ride.driver.number + " client: "+ride.client.number);
 
-            itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Go and pick up the client !");
-            System.out.println("Sent SMS");
+            itsLocationProcessor.requestLocation(ride.client.number, new BiConsumer<String, Location>() {
+                @Override
+                public void accept(String s, Location location) {
+                    sendLocalizationMMS(ride.driver.number, "Go and pick up the client !", location);
+                    System.out.println("Send MMS to driver with client localization");
+                }
+            });
             itsLocationProcessor.requestLocation(ride.driver.number, new BiConsumer<String, Location>() {
                 @Override
                 public void accept(String s, Location location) {
                     sendLocalizationMMS(ride.client.number, "Your driver is on the way!", location);
-                    System.out.println("Send MMS");
+                    System.out.println("Send MMS to client with driver localization");
                 }
             });
         }
