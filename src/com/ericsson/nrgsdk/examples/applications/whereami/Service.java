@@ -45,9 +45,27 @@ public class Service {
 		return rides.stream().filter(new Predicate<Ride>() {
 			@Override
 			public boolean test(Ride ride) {
-				return number.equals(ride.client.number) || number.equals(ride.driver.number);
+				return ride.active && (number.equals(ride.client.number) || number.equals(ride.driver.number));
 			}
 		}).findAny();
+	}
+	
+	public Optional<Ride> getLastRideForClient(final String number) {
+		return rides.stream().filter(new Predicate<Ride>() {
+			@Override
+			public boolean test(Ride ride) {
+				return !ride.active && number.equals(ride.client.number);
+			}
+		}).skip(rides.size() - 1).findFirst();
+	}
+	
+	public Optional<Ride> getLastRideForDriver(final String number) {
+		return rides.stream().filter(new Predicate<Ride>() {
+			@Override
+			public boolean test(Ride ride) {
+				return !ride.active && number.equals(ride.driver.number);
+			}
+		}).skip(rides.size() - 1).findFirst();
 	}
 
 	public boolean addRide(Ride ride) {

@@ -10,6 +10,8 @@ public class Ride {
 	public float distance;
 	public boolean active = false;
 	public boolean finished = false;
+	public boolean ratedByClient = false;
+	public boolean ratedByDriver = false;
 
 	public Ride(Client client) {
 		this.client = client;

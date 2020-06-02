@@ -265,6 +265,41 @@ public class Feature {
                 return;
             }
         }
+        if (aMessageContent.toLowerCase().matches("rate:(.*)")) { // sprawdzamy pracownika
+            int rate = Integer.parseInt(aMessageContent.split(":")[1]);
+            Optional<Ride> opLastRideClient = service.getLastRideForClient(aSender);
+            Optional<Ride> opLastRideDriver = service.getLastRideForDriver(aSender);
+            if (!opLastRideClient.isPresent() && !opLastRideDriver.isPresent()) {
+                System.out.println("There is no such ride");
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "There is no such ride");
+                return;
+            }
+            if(opLastRideClient.isPresent()) {
+            	Ride lastRide =opLastRideClient.get(); 
+            	if(lastRide.ratedByClient) {
+                    System.out.println("Client already rated");
+                    itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You have already rated last ride");
+                    return;
+            	}
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You have rated last ride on: " + rate);
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), lastRide.driver.number, "Client rated your last ride on: " + rate);
+                lastRide.ratedByClient = true;
+                return;
+            }
+            if(opLastRideDriver.isPresent()) {
+            	Ride lastRide = opLastRideDriver.get(); 
+            	if(lastRide.ratedByDriver) {
+                    System.out.println("Driver already rated");
+                    itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You have already rated last ride");
+                    return;
+            	}
+                
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You have rated last ride on: " + rate);
+                itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), lastRide.client.number, "Driver rated your last ride on: " + rate);
+                lastRide.ratedByDriver = true;
+                return;
+            }
+        }
     }
 
     public void sendLocalizationMMS(String to, String message, Location location) {
