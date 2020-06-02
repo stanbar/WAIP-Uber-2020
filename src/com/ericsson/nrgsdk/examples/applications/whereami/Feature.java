@@ -185,7 +185,7 @@ public class Feature {
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're our new client");
         }
 
-        if (aMessageContent.toLowerCase().equals("request-driver")) { //sprawdzamy pracownika
+        if (aMessageContent.toLowerCase().equals("ride-request")) { //sprawdzamy pracownika
             Optional<Client> opClient = service.getClient(aSender);
             if (!opClient.isPresent()) {
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "You're not a client. Only a client can request a ride.");
@@ -213,16 +213,16 @@ public class Feature {
             });
         }
 
-        if (aMessageContent.toLowerCase().matches("biere:(.*)")) { //sprawdzamy pracownika
+        if (aMessageContent.toLowerCase().matches("take:(.*)")) { //sprawdzamy pracownika
             String rideNumber = aMessageContent.split(":")[1];
-            System.out.println("biere ride: "+rideNumber);
+            System.out.println("take ride: "+rideNumber);
             Optional<Ride> opRide = service.getRide(Integer.parseInt(rideNumber));
             if (!opRide.isPresent()) {
                 System.out.println("There is no such ride");
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "There is no such ride");
                 return;
             }
-            Ride ride = opRide.get();
+            final Ride ride = opRide.get();
             if (ride.active) {
                 System.out.println("This ride is already taken, good luck next time");
                 itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), aSender, "This ride is already taken, good luck next time");
@@ -232,7 +232,7 @@ public class Feature {
             Driver driver = service.getDriver(aSender).get();
             ride.driver = driver;
             ride.active = true;
-            System.out.println("biere ride driver: "+ride.driver.number + " client: "+ride.client.number);
+            System.out.println("take ride driver: "+ride.driver.number + " client: "+ride.client.number);
 
             itsSMSProcessor.sendSMS(Configuration.INSTANCE.getProperty("serviceNumber"), ride.driver.number, "Go and pick up the client !");
             System.out.println("Sent SMS");
@@ -311,17 +311,18 @@ public class Feature {
      * configuration.
      */
     private String getDescription() {
-        String s = "Nacisnij START, aby polaczyc sie z symulatorem";
+        String s = "Press START, to start the app.";
         s += "\n";
-        s += "Pracownik moze wysylac SMS na numer " + Configuration.INSTANCE.getProperty("serviceNumber") + " z nastepujacymi poleceniami ";
+        s += "Client and driver can send SMSs on number " + Configuration.INSTANCE.getProperty("serviceNumber") + " with following commands";
         s += "\n-------------------------------------------\n";
-        s += "\"register-driver\" pozwala uzytkownikowi na rejestracje w systemie jako driver\n";
-        s += "\"register-client\" pozwala uzytkownikowi na rejestracje w systemie jako client\n";
-        s += "\"request-driver\" tworzy zlecenie\n";
-        s += "\"biere:RIDE_NUMBER\" rezerwuje sesje \n";
-        s += "\"stop\" zatrzymuje jazde \n";
+        s += "\"register-driver\" register number as a driver\n";
+        s += "\"register-client\" register number as a client \n";
+        s += "\"ride-request\" create ride request\n";
+        s += "\"take:RIDE_NUMBER\" take ride request \n";
+        s += "\"stop\" stop the ride \n";
+        s += "\"rate:[1-5]\" rate last ride from 1 to 5\n";
         s += "\n-------------------------------------------\n";
-        s += "Nacisnij STOP, aby zatrzymac aplikacje.\n";
+        s += "Press STOP, to stop the app.\n";
         return s;
     }
 
