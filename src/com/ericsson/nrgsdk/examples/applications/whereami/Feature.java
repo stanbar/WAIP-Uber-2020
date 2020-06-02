@@ -204,7 +204,7 @@ public class Feature {
                         public void accept(final Driver driver) {
                             sendLocalizationMMS(
                                     driver.number,
-                                    "A new submission has occurred with number: " + ride.number + " respond to the message and type 'biere:" + ride.number + "' to accept request.",
+                                    "A new submission has occurred with number: " + ride.number + " respond to the message and type 'take:" + ride.number + "' to accept request.",
                                     location);
                         }
                     });
